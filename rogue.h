@@ -683,3 +683,13 @@ void                    waste_time(void);
 void                    wear(void);
 void                    whatis(void);
 void                    wield(void);
+
+/* RVIP port (rvip.c, port/) */
+#ifndef XR_SHIM
+#define be_sound(event) ((void) 0)
+#endif
+extern int explore_mode;
+int	explore_step(), explore_stairs(), monster_in_view(), cmd_menu(), inv_menu(), menu();
+void	explore_reset();
+extern struct linked_list *inv_pick;
+extern int inv_again;

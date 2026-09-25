@@ -78,6 +78,9 @@ gotfile:
         msg("Save game failed!");
         return FALSE;
     }
+#ifdef __EMSCRIPTEN__
+    wc_saved = TRUE;		/* keep the file (be_web.c) */
+#endif
     return TRUE;
 }
 
@@ -194,6 +197,7 @@ restore(char *file, char **envp)
     cw = newwin(LINES, COLS, 0, 0);
     mw = newwin(LINES, COLS, 0, 0);
     hw = newwin(LINES, COLS, 0, 0);
+    wc_mapwin = cw;
     nocrmode();
     keypad(cw,1);
     mpos = 0;
@@ -206,7 +210,11 @@ restore(char *file, char **envp)
     	return(FALSE);
     }
 	
+#ifdef __EMSCRIPTEN__		/* web: kept as the autosave, removed at game end */
+    if (0)
+#else
     if (!wizard && (md_unlink_open_file(file, inf) < 0))
+#endif
     {
 	endwin();
     	printf("Cannot unlink file\n");

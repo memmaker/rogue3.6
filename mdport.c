@@ -83,7 +83,7 @@
 #endif
 #endif
 
-#if defined(HAVE_TERM_H)
+#if defined(HAVE_TERM_H) && !defined(XR_SHIM)
 #include <term.h>
 #elif defined(HAVE_NCURSES_TERM_H)
 #include <ncurses/term.h>
@@ -476,7 +476,9 @@ md_gethomedir(void)
     struct passwd *pw;
     pw = getpwuid(getuid());
 
-    h = pw->pw_dir;
+    h = getenv("HOME");         /* RVIP: $HOME first, so play.sh can move saves */
+    if (h == NULL || *h == '\0')
+        h = pw->pw_dir;
 
     if (strcmp(h,"/") == 0)
         h = NULL;
@@ -1122,6 +1124,21 @@ md_readchar(WINDOW *win)
     int mode2 = M_NORMAL;
     int nodelayf = 0;
     int count = 0;
+#ifdef XR_SHIM
+    /* curses shim (port/): keys arrive decoded, no escape sequences */
+    switch (ch = wgetch(win)) {
+        case KEY_LEFT:  return 'h';
+        case KEY_RIGHT: return 'l';
+        case KEY_UP:    return 'k';
+        case KEY_DOWN:  return 'j';
+        case KEY_HOME:  case KEY_A1: return 'y';
+        case KEY_PPAGE: case KEY_A3: return 'u';
+        case KEY_END:   case KEY_C1: return 'b';
+        case KEY_NPAGE: case KEY_C3: return 'n';
+        case KEY_B2:    return '.';
+    }
+    return ch;
+#endif
 
     for(;;)
     {
@@ -1551,7 +1568,7 @@ md_ucount()
 
    return(count);
 #else
-   return(1)
+   return(1);
 #endif
 }
 

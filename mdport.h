@@ -123,6 +123,20 @@ typedef unsigned int pid_t;
 #define HAVE_ALARM 1
 #endif
 
+#if defined(__APPLE__) || defined(__EMSCRIPTEN__)	/* RVIP: no crypt.h; curses shim, no term.h */
+#undef HAVE_CRYPT_H
+#undef HAVE_TERM_H
+#endif
+#ifdef __EMSCRIPTEN__		/* no users, processes or load average in the browser */
+#undef HAVE_SETGID
+#undef HAVE_SETUID
+#undef HAVE_SETREUID
+#undef HAVE_SETREGID
+#undef HAVE_WORKING_FORK
+#undef HAVE_GETLOADAVG
+#undef HAVE_UTMPX_H
+#endif
+
 #ifdef __DJGPP__
 #undef HAVE_GETPWUID /* DJGPP's limited version doesn't even work as documented */
 #endif

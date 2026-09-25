@@ -93,6 +93,11 @@ char **envp;
     if (argc == 2)
 	if (!restore(argv[1], envp)) /* Note: restore will never return */
 	    exit(1);
+#ifdef __EMSCRIPTEN__
+    /* web: continue the autosave */
+    if (argc < 2 && access(file_name, 0) == 0 && !restore(file_name, envp))
+	exit(1);
+#endif
 
     time(&now);
     lowtime = (int) now;
@@ -150,6 +155,7 @@ char **envp;
     cw = newwin(LINES, COLS, 0, 0);
     mw = newwin(LINES, COLS, 0, 0);
     hw = newwin(LINES, COLS, 0, 0);
+    wc_mapwin = cw;
     keypad(cw,1);
     waswizard = wizard;
     new_level();			/* Draw current level */

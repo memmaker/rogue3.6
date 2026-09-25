@@ -21,13 +21,13 @@ OBJS1 = vers.$(O) armor.$(O) chase.$(O) command.$(O) daemon.$(O) daemons.$(O) \
 	misc.$(O) monsters.$(O) move.$(O) newlevel.$(O) options.$(O) 
 OBJS2 =	pack.$(O) passages.$(O) potions.$(O) rings.$(O) rip.$(O) rooms.$(O) \
 	save.$(O) scrolls.$(O) state.$(O) sticks.$(O) things.$(O) \
-	weapons.$(O) wizard.$(O) xcrypt.$(O)
+	weapons.$(O) wizard.$(O) xcrypt.$(O) rvip.$(O)
 OBJS  = $(OBJS1) $(OBJS2)
 
 CFILES= vers.c armor.c chase.c command.c daemon.c daemons.c fight.c \
 	init.c io.c list.c main.c mdport.c misc.c monsters.c move.c newlevel.c \
 	options.c pack.c passages.c potions.c rings.c rip.c rooms.c \
-	save.c scrolls.c state.c sticks.c things.c weapons.c wizard.c xcrypt.c
+	save.c scrolls.c state.c sticks.c things.c weapons.c wizard.c xcrypt.c rvip.c
 
 
 MISC_C=
@@ -149,3 +149,9 @@ dist.win32:
 	    -Ox -wd4033 -wd4716" $(PROGRAM).exe
 	-del $(DISTNAME)-win32.zip
 	zip $(DISTNAME)-win32.zip $(PROGRAM).exe LICENSE.TXT $(DOCS)
+
+# macOS/XQuartz build with the curses shim and NetHack tiles (RVIP); one status line
+XFLAGS = -O2 -g -std=gnu89 -w -Wno-implicit-function-declaration -Wno-implicit-int -Wno-return-type -Wno-int-conversion -Wno-incompatible-pointer-types -DWC_STATUS_ROWS=1 -Iport -I/opt/X11/include -I/opt/X11/include/freetype2
+PORTSRC = port/wcurses.c port/tiles.c port/be_x11.c
+rogue36-x11: $(CFILES) $(HDRS) $(PORTSRC) port/curses.h port/tilemap.h
+	$(CC) $(XFLAGS) $(EXTRA) $(CFILES) $(PORTSRC) -L/opt/X11/lib -lX11 -lXft -lfontconfig -o $@
