@@ -90,6 +90,7 @@ parts.append(section('web', 'Playing in the browser', WEB))
 # RVIP: About this version (rogue2wasm.md: Source and changes)
 parts.append('<h2 id="h-version">About this version</h2><ul>'
              '<li>Based on <strong>Rogue 3.6.4</strong> (Michael Toy, Ken Arnold, Glenn Wichman).</li>'
+             '<li>Tiles: NetHack (default) or <strong>DawnHack</strong> by DragonDePlatino with DawnBringer\'s palette (CC BY 3.0), as sheeted by <a href="https://github.com/mikeyk730/Rogue-Collection" target="_blank" rel="noopener">Rogue Collection</a>; switch with the <em>Tiles</em> button.</li>'
              '<li>Original source: <a href="https://github.com/RoguelikeRestorationProject/rogue3.6/tree/f36912c" target="_blank" rel="noopener">RoguelikeRestorationProject/rogue3.6, commit f36912c</a></li>'
              '<li>Our changes (port, auto-explore, command menu, web build): '
              '<a href="https://github.com/memmaker/rogue3.6/compare/f36912c...master" target="_blank" rel="noopener">memmaker/rogue3.6, compared with the original</a></li></ul>')
