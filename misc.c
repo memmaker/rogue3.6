@@ -228,6 +228,7 @@ eat()
 
     if ((item = get_item("eat", FOOD)) == NULL)
 	return;
+    be_sound("eat");
     obj = (struct object *) ldata(item);
     if (obj->o_type != FOOD)
     {

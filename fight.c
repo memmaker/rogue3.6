@@ -333,6 +333,7 @@ check_level()
 	max_hp += add;
 	if ((pstats.s_hpt += add) > max_hp)
 	    pstats.s_hpt = max_hp;
+	be_sound("level");
 	msg("Welcome to level %d", i);
     }
     pstats.s_lvl = i;
@@ -466,6 +467,7 @@ hit(char *er, char *ee)
 {
     char *s = "";
 
+    be_sound(er == 0 ? "hit" : ee == 0 ? "mon_hit" : "");
     addmsg(prname(er, TRUE));
     if (terse)
 	s = " hit.";
@@ -493,6 +495,7 @@ miss(char *er, char *ee)
 {
     char *s = "";
 
+    if (er == 0) be_sound("miss");
     addmsg(prname(er, TRUE));
     switch (terse ? 0 : rnd(4))
     {
@@ -670,6 +673,7 @@ killed(struct linked_list *item, int pr)
     tp = (struct thing *) ldata(item);
     if (pr)
     {
+	be_sound("kill");
 	addmsg(terse ? "Defeated " : "You have defeated ");
 	if (on(player, ISBLIND))
 	    msg("it.");

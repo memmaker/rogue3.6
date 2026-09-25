@@ -55,6 +55,7 @@ death(int monst)
     time_t date;
     char buf[80];
 
+    be_sound("death");
     time(&date);
     lt = localtime(&date);
     clear();

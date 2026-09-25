@@ -151,6 +151,7 @@ money()
 	    {
 		if (!terse)
 		    addmsg("You found ");
+		be_sound("money1");
 		msg("%d gold pieces.", rp->r_goldval);
 	    }
 	    purse += rp->r_goldval;
@@ -207,6 +208,7 @@ drop()
     attach(lvl_obj, obj);
     mvaddch(hero.y, hero.x, op->o_type);
     op->o_pos = hero;
+    be_sound("drop");
     msg("Dropped %s", inv_name(op, TRUE));
 }
 

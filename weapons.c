@@ -277,6 +277,7 @@ bad:
 	addmsg("W");
     else
 	addmsg("You are now w");
+    be_sound("wield");
     msg("ielding %s", inv_name(obj, TRUE));
     cur_weapon = obj;
 }

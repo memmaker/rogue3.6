@@ -28,6 +28,7 @@ quaff()
      */
     if (item == NULL)
 	return;
+    be_sound("quaff");
     obj = (struct object *) ldata(item);
     if (obj->o_type != POTION)
     {

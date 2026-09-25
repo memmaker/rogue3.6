@@ -45,6 +45,7 @@ wear()
 	addmsg("You are now w");
     else
 	addmsg("W");
+    be_sound("wield");
     msg("earing %s.", a_names[obj->o_which]);
     cur_armor = obj;
     obj->o_flags |= ISKNOW;

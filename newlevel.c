@@ -23,6 +23,7 @@ new_level()
     int ch = 0;
     coord stairs;
 
+    explore_reset();
     if (level > max_level)
 	max_level = level;
     wclear(cw);
