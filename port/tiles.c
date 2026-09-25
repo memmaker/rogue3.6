@@ -40,8 +40,8 @@ static int real(int y, int x)
         : stdscr->c[y * stdscr->maxx + x] & A_CHARTEXT;
 }
 
-#define HWALLISH(c) ((c) == '-' || (c) == DOOR)
-#define VWALLISH(c) ((c) == '|' || (c) == DOOR)
+#define HWALLISH(c) ((c) == '-' || (c) == DOOR || (c) == SECRETDOOR)
+#define VWALLISH(c) ((c) == '|' || (c) == DOOR || (c) == SECRETDOOR)
 
 static int terrain(int y, int x, int ch)
 {
