@@ -687,6 +687,7 @@ void                    wield(void);
 /* RVIP port (rvip.c, port/) */
 #ifndef XR_SHIM
 #define be_sound(event) ((void) 0)
+#define be_run_end(ev, killer, score) ((void) 0)
 #endif
 extern int explore_mode;
 int	explore_step(), explore_stairs(), monster_in_view(), cmd_menu(), inv_menu(), menu();

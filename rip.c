@@ -67,6 +67,7 @@ death(int monst)
     sprintf(buf, "%d Au", purse);
     mvaddstr(15, 28-(((int)strlen(buf)+1)/2), buf);
     killer = killname(monst);
+    be_run_end("death", killer, purse);
     mvaddstr(17, 28-(((int)strlen(killer)+1)/2), killer);
     mvaddstr(16, 33, vowelstr(killer));
     sprintf(prbuf, "%4d", 1900+lt->tm_year);
@@ -385,6 +386,7 @@ total_winner()
     }
     mvprintw(c - 'a' + 1, 0,"   %5d  Gold Peices          ", oldpurse);
     refresh();
+    be_run_end("win", NULL, purse);
     score(purse, 2, 0);
     exit(0);
 }

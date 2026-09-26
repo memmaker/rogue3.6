@@ -347,6 +347,7 @@ quit(int p)
 	move(LINES-1, 0);
 	draw(stdscr);
 	endwin();
+	be_run_end("quit", NULL, purse);
 	score(purse, 1, 0);
 	exit(0);
     }
