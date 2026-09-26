@@ -16,3 +16,8 @@ Ported after Rogue 5.4 (`~/Games/rogue5.4`) and the Advanced Rogue line;
 - **Upstream bug** (same as 5.4): `rs_read_daemons()` cleared `d_list[cnt]`
   after the loop. Moved inside. `mdport.c` had `return(1)` without `;` in
   a branch only the web build compiles.
+- Prompt line (RVIP step 5 / W4, 2026-09-26): the live message row is shown in a
+  box over the map by `RvipWM.prompt` (rvip-wm.js). A key hides it only while
+  the game waits for a command, so a question stays up until answered.
+  Here: `be_prompt(r)` from `msg_refresh()` in `port/wcurses.c` (row 0 text),
+  `js_key(wc_cmd_prompt)` in `port/be_web.c`; `be_x11.c` has an empty stub.
