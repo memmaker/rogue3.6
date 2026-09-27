@@ -89,6 +89,11 @@
 			c.drawImage(tiles, (t % 32) * 16, ((t / 32) | 0) * 16, 16, 16, px, py, T.cw, T.ch);
 			return;
 		}
+		var ic = p === P_INV && T.rowIcon ? T.rowIcon[y] : -1;
+		if (ic >= 0 && tilesReady && (x === 3 || x === 4)) {
+			c.drawImage(tiles, (ic % 32) * 16 + (x - 3) * 8, ((ic / 32) | 0) * 16, 8, 16, px, py, T.cw, T.ch);
+			return;
+		}
 		var k = ch & 0xff;
 		if (k > 32) {
 			c.font = T.font;
@@ -103,7 +108,7 @@
 		if (!T || cur.y >= T.rows || cur.x >= T.cols) return;
 		var c = T.ctx, px = T.pad + cur.x * T.cw, py = T.pad + cur.y * T.ch;
 		c.fillStyle = c.strokeStyle = FG;
-		if (T.t[cur.y * T.cols + cur.x] >= 0) { c.lineWidth = 1; c.strokeRect(px + 0.5, py + 0.5, T.cw - 1, T.ch - 1); }
+		if (tilesReady && T.t[cur.y * T.cols + cur.x] >= 0) { c.lineWidth = 1; c.strokeRect(px + 0.5, py + 0.5, T.cw - 1, T.ch - 1); }
 		else c.fillRect(px, py + T.ch - 2, T.cw, 2);
 	}
 
@@ -318,17 +323,20 @@
 			/* the cursor is drawn over the cell; redraw that cell next time */
 			if (xr.lastCur && panes[xr.lastCur.p]) draw(xr.lastCur.p, xr.lastCur.y, xr.lastCur.x);
 			drawCursor();
+			var mb = panes[P_MSG] && panes[P_MSG].cv.parentNode;   /* follow the newest message */
+			if (mb) mb.scrollTop = mb.scrollHeight;
 			xr.lastCur = cur.p >= 0 ? { p: cur.p, y: cur.y, x: cur.x } : null;
 			audio.level = level;
 			if (!!town !== audio.town) { audio.town = !!town; updateMusic(); }
 		},
-		invfg: function (y, c) {   /* the game's colour for an inventory row */
+		invfg: function (y, c, t) {   /* the game's colour and icon tile for an inventory row */
 			var T = panes[P_INV];
 			if (!T || y >= T.rows) return;
 			(T.rowFg = T.rowFg || [])[y] = c;
+			(T.rowIcon = T.rowIcon || [])[y] = t;
 			for (var x = 0; x < T.cols; x++) draw(P_INV, y, x);
 		},
-		vis: function (s) { RvipWM.visible(document.querySelector('#t-vis .body'), s); },
+		vis: function (s) { RvipWM.visible(document.querySelector('#t-vis .body'), s, visIcon); },
 		key: function (atCmd) { RvipWM.prompt.wait(atCmd); return events.length ? events.shift() : -1; },
 		prompt: function (s) { RvipWM.prompt.text(s); },
 		requestSave: function () { saveReq = true; },   /* also for testing */
@@ -476,17 +484,30 @@
 	tiles.onload = function () { tilesFinished(true); };
 	tiles.onerror = function () { tilesFinished(false); };
 	/* tile sets: same slot layout (port/mkdawn.py); the choice is a per-browser preference */
-	var TILESETS = [['tiles.png', 'NetHack'], ['tiles-dawn.png', 'DawnHack']], tileset = 0;
+	var TILESETS = [['tiles.png', 'NetHack'], ['tiles-dawn.png', 'DawnHack'], [null, 'None']], tileset = 0;
 	try { tileset = +localStorage.getItem('tileset') % TILESETS.length || 0; } catch (err) { /* no storage */ }
 	function renderTileset() { var b = $('btn-tiles'); if (b) b.textContent = 'Tiles: ' + TILESETS[tileset][1]; }
 	function toggleTileset() {
 		tileset = (tileset + 1) % TILESETS.length;
 		try { localStorage.setItem('tileset', tileset); } catch (err) { /* no storage */ }
 		renderTileset();
-		tiles.onload = function () { tilesReady = true; if (panes[P_MAP]) { shape(P_MAP); applyDom(); } };
+		var redraw = function () {
+			[P_MAP, P_INV].forEach(function (p) { if (panes[p]) shape(p); });
+			var vb = document.querySelector('#t-vis .body'); if (vb) vb._vis = null;
+			applyDom();
+		};
+		if (!TILESETS[tileset][0]) { tilesReady = false; redraw(); return; }   /* text mode */
+		tiles.onload = function () { if (TILESETS[tileset][0]) { tilesReady = true; redraw(); } };
 		tiles.src = TILESETS[tileset][0];
 	}
-	tiles.src = TILESETS[tileset][0];
+	/* Visible window icon: the tile as a CSS sprite */
+	function visIcon(t) {
+		if (!tilesReady || !(t >= 0)) return null;
+		var s = document.createElement('i');
+		s.style.cssText = 'display:inline-block;width:16px;height:16px;vertical-align:-3px;margin-right:4px;image-rendering:pixelated;background:url(' + tiles.src + ') -' + (t % 32) * 16 + 'px -' + ((t / 32) | 0) * 16 + 'px';
+		return s;
+	}
+	if (TILESETS[tileset][0]) tiles.src = TILESETS[tileset][0]; else tilesDone = true;
 
 	function crashed(err) {
 		if (!running) return;
