@@ -238,9 +238,9 @@ int key;
 
 /* groups of the help list, each starting at the key in grp_start[] */
 static char *cmd_groups[] = {
-    "Help", "Move and run", "Explore and act", "Items", "Game"
+    "Help", "Explore and act", "Items", "Game"
 };
-static int grp_start[] = { '?', 'h', 'x', 'i', 'o' };
+static int grp_start[] = { '?', 'x', 'i', 'o' };  /* moves (h..N) are left out */
 #define NGRP (sizeof grp_start / sizeof grp_start[0])
 
 /* Arrow keys / numpad 8 2 move, Enter / 5 / Space / 6 choose, Esc / 4 / 0
@@ -303,7 +303,7 @@ cmd_menu()
         for (grp = -1, n = 0, h = helpstr; h->h_ch && h->h_desc && n < 80; h++) {
             if (grp + 1 < (int)NGRP && h->h_ch == grp_start[grp + 1]) grp++;
             if (grp != g || h->h_ch == '\r' || h->h_ch == ESC) continue;
-            if (strchr("hjklyubn", h->h_ch)) continue;  /* single steps: not worth a menu */
+            if (strchr("hjklyubnHJKLYUBN", h->h_ch)) continue;  /* moves and runs: keys, not menu items */
             {
                 char *d = h->h_desc, k[12];
                 strcpy(k, unctrl(h->h_ch));

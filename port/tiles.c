@@ -157,7 +157,8 @@ void wc_inv(WINDOW *p)
 
     memcpy(save, prbuf, sizeof save);
     for (l = pack; l && y < p->maxy - 1; l = next(l), y++, ch++) {
-        mvwprintw(p, y, 0, ic ? "%c)    %s" : "%c) %s", ch, inv_name(OBJPTR(l), FALSE));  /* cols 3-4: icon */
+        if (ic) mvwprintw(p, y, 0, "%c)    %s", ch, inv_name(OBJPTR(l), FALSE));  /* cols 3-4: icon */
+        else mvwprintw(p, y, 0, "%c) %c %s", ch, (OBJPTR(l))->o_type, inv_name(OBJPTR(l), FALSE));
         wclrtoeol(p);
         be_invfg(y, wc_kind((OBJPTR(l))->o_type)->css, ic ? wc_obj_tile(OBJPTR(l)) : -1);
     }

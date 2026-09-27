@@ -39,10 +39,11 @@
 
 	/* ---------- panes ---------- */
 
-	function face() { return L && L.face ? '"' + L.face + '", ' + FONT : FONT; }
-	function measure(px) {
+	/* top-bar font: the text windows; the map (text mode) has its own */
+	function face(p) { var n = L && (p === P_MAP ? L.mapFace : L.face); return n ? '"' + n + '", ' + FONT : FONT; }
+	function measure(px, p) {
 		var c = document.createElement('canvas').getContext('2d');
-		c.font = px + 'px ' + face();
+		c.font = px + 'px ' + face(p);
 		return Math.ceil(c.measureText('M').width);
 	}
 
@@ -52,10 +53,10 @@
 		if (p === P_MAP) { T.cw = T.ch = L.tile; T.pad = 0; }
 		else {
 			var f = p === P_POP ? L.font.pop : L.font[WIN[p]];
-			T.cw = measure(f); T.ch = Math.round(f * 1.3); T.pad = p === P_POP ? T.cw : 0;
-			T.font = f + 'px ' + face();
+			T.cw = measure(f, p); T.ch = Math.round(f * 1.3); T.pad = p === P_POP ? T.cw : 0;
+			T.font = f + 'px ' + face(p);
 		}
-		if (p === P_MAP) T.font = (L.face ? '' : 'bold ') + Math.round(T.ch * 0.8) + 'px ' + face();
+		if (p === P_MAP) T.font = (L.mapFace ? '' : 'bold ') + Math.round(T.ch * 0.8) + 'px ' + face(p);
 		/* text panes come trimmed from the game (be_extent): the canvas covers T.vc × T.vr cells */
 		if (p === P_MAP || p === P_POP) { T.vc = T.cols; T.vr = T.rows; }
 		var w = T.vc * T.cw + 2 * T.pad, h = T.vr * T.ch + 2 * T.pad;
@@ -91,8 +92,11 @@
 			return;
 		}
 		var ic = p === P_INV && T.rowIcon ? T.rowIcon[y] : -1;
-		if (ic >= 0 && tilesReady && (x === 3 || x === 4)) {
-			c.drawImage(tiles, (ic % 32) * 16 + (x - 3) * 8, ((ic / 32) | 0) * 16, 8, 16, px, py, T.cw, T.ch);
+		if (ic >= 0 && tilesReady && (x === 3 || x === 4)) {   /* square, whatever the font's cell shape */
+			var s = Math.min(2 * T.cw, T.ch), ix = T.pad + 3 * T.cw + (2 * T.cw - s) / 2;
+			c.save(); c.beginPath(); c.rect(px, py, T.cw, T.ch); c.clip();
+			c.drawImage(tiles, (ic % 32) * 16, ((ic / 32) | 0) * 16, 16, 16, ix, py + (T.ch - s) / 2, s, s);
+			c.restore();
 			return;
 		}
 		var k = ch & 0xff;
@@ -158,13 +162,14 @@
 				});
 				if (s.wm) d.wm = s.wm;
 				if (typeof s.face === 'string') d.face = s.face;
+				if (typeof s.mapFace === 'string') d.mapFace = s.mapFace;
 				if (s.audio) d.audio = { sound: s.audio.sound === true, music: s.audio.music === true };
 			}
 		} catch (err) { /* nothing saved yet */ }
 		L = d;
 		renderAudio();
 		$('sel-font').value = L.face || '';   /* if fonts.json came first */
-		if (L.face) loadFace(L.face);
+		loadFace(L.face); loadFace(L.mapFace);
 	}
 
 	var saveTimer = 0;
@@ -237,6 +242,7 @@
 			onReset: resetLayout
 		});
 		wm.apply();
+		renderMapSel();
 	}
 
 	function zoomMap(d) {
@@ -257,8 +263,8 @@
 	}
 
 	function resetLayout() {
-		var a = L.audio, fc = L.face;
-		L = defaultLayout(); L.audio = a; L.face = fc; L.wm = wm.state();
+		var a = L.audio, fc = L.face, mf = L.mapFace;
+		L = defaultLayout(); L.audio = a; L.face = fc; L.mapFace = mf; L.wm = wm.state();
 		for (var p = 0; p < panes.length; p++) if (panes[p]) shape(p);
 		applyDom(); saveLayout();
 	}
@@ -510,14 +516,26 @@
 			if (xr.atCmd) events.push(12);   /* ^L: the game redraws, the Inventory gets or drops its icons */
 			applyDom();
 		};
+		renderMapSel();
 		if (!TILESETS[tileset][0]) { tilesReady = false; redraw(); return; }   /* text mode */
 		tiles.onload = function () { if (TILESETS[tileset][0]) { tilesReady = true; redraw(); } };
 		tiles.src = TILESETS[tileset][0];
 	}
+	/* map font chooser: on the Map title bar (shown on hover), text mode only */
+	var mapSel = document.createElement('select');
+	mapSel.title = 'Map font (text mode)';
+	mapSel.innerHTML = '<option value="">Default font</option>';
+	mapSel.addEventListener('pointerdown', function (e) { e.stopPropagation(); });   /* not a window drag */
+	function renderMapSel() {
+		var bs = document.querySelector('#t-map .wm-btns');
+		if (bs && mapSel.parentNode !== bs) bs.insertBefore(mapSel, bs.firstChild);
+		mapSel.hidden = !!TILESETS[tileset][0];
+		mapSel.value = (L && L.mapFace) || '';
+	}
 	/* text font: a face from the index page's fonts/ (web/build.sh lists them) */
-	function loadFace(n) {
-		var redraw = function () { for (var p = 0; p < panes.length; p++) if (panes[p]) shape(p); document.querySelector('#t-vis .body').style.fontFamily = n ? '"' + n + '", monospace' : ''; applyDom(); };
-		if (!n) { redraw(); return; }
+	function loadFace(n, now) {
+		var redraw = function () { for (var p = 0; p < panes.length; p++) if (panes[p]) shape(p); document.querySelector('#t-vis .body').style.fontFamily = L.face ? '"' + L.face + '", monospace' : ''; applyDom(); };
+		if (!n) { if (now) redraw(); return; }
 		var ff = new FontFace(n, 'url(../fonts/' + n + '.woff)');
 		ff.load().then(function () { document.fonts.add(ff); redraw(); }).catch(function () { status('Could not load the font ' + n + '.', true); });
 	}
@@ -568,11 +586,14 @@
 		RvipWM.dropdown($('btn-audio'), $('menu-audio'));
 		RvipWM.dropdown($('btn-file'), $('menu-file'));
 		fetch('fonts.json').then(function (r) { return r.json(); }).then(function (list) {
-			var s = $('sel-font');
-			list.forEach(function (n) { var o = document.createElement('option'); o.value = n; o.textContent = n.replace(/^Web(Plus|437)_/, '').replace(/_/g, ' '); s.appendChild(o); });
-			s.value = (L && L.face) || '';
+			[[$('sel-font'), 'face'], [mapSel, 'mapFace']].forEach(function (a) {
+				list.forEach(function (n) { var o = document.createElement('option'); o.value = n; o.textContent = n.replace(/^Web(Plus|437)_/, '').replace(/_/g, ' '); a[0].appendChild(o); });
+				a[0].value = (L && L[a[1]]) || '';
+			});
 		}).catch(function () { });
-		$('sel-font').onchange = function () { if (!L) return; L.face = this.value; saveLayout(); loadFace(L.face); this.blur(); };
+		[[$('sel-font'), 'face'], [mapSel, 'mapFace']].forEach(function (a) {
+			a[0].onchange = function () { if (!L) return; L[a[1]] = this.value; saveLayout(); loadFace(this.value, true); this.blur(); };
+		});
 		$('btn-restart').onclick = function () { location.reload(); };
 		renderAudio();
 		document.querySelectorAll('button').forEach(function (b) {
