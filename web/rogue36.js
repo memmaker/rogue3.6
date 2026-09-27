@@ -184,26 +184,12 @@
 		}
 		/* the map never shrinks: bigger than its window, it scrolls with the hero */
 		if (p === P_MAP) { T.box = box; scrollMap(true); return; }
-		/* text panes: fit the columns in use, the blank rest may be clipped
-		 * (an 80-column inventory would otherwise shrink, and A+/A- do nothing) */
-		var used = p === P_POP ? T.w : Math.max(1, usedCols(T)) * T.cw + 2 * T.pad;
-		T.fitCols = usedCols(T);
-		/* the inventory is a fixed slot list with its totals on the last row:
-		 * fit its width only and let the window scroll, or its empty slots
-		 * shrink the text as soon as it is taller than the window */
-		var sc = Math.min(1, box.w / used, p === P_INV ? 1 : box.h / T.h);
+		/* text windows: the font size is the user's; the canvas is shown 1:1 and
+		 * the window scrolls (pop-up: scaled down to fit over the map) */
+		var sc = p === P_POP ? Math.min(1, box.w / T.w, box.h / T.h) : 1;
 		T.cv.style.width = T.w * sc + 'px';
 		T.cv.style.height = T.h * sc + 'px';
 		if (p === P_POP) { var pop = $('pop'); pop.style.left = rects.map[0] + L.tile + 'px'; pop.style.top = rects.map[1] + 4 + 'px'; }
-	}
-
-	function usedCols(T) {
-		var n = 0;
-		for (var i = 0; i < T.ch_.length; i++) {
-			var x = i % T.cols;
-			if (x >= n && ((T.ch_[i] & 0xff) > 32 || T.t[i] >= 0 || (T.ch_[i] & 0x100))) n = x + 1;
-		}
-		return n;
 	}
 
 	var hero = { y: 0, x: 0 }, off = { x: 0, y: 0 };
@@ -324,7 +310,6 @@
 			/* the cursor is drawn over the cell; redraw that cell next time */
 			if (xr.lastCur && panes[xr.lastCur.p]) draw(xr.lastCur.p, xr.lastCur.y, xr.lastCur.x);
 			drawCursor();
-			for (var p = 1; p < WIN.length; p++) if (panes[p] && usedCols(panes[p]) !== panes[p].fitCols) fit(p);
 			xr.lastCur = cur.p >= 0 ? { p: cur.p, y: cur.y, x: cur.x } : null;
 			audio.level = level;
 			if (!!town !== audio.town) { audio.town = !!town; updateMusic(); }
