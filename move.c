@@ -286,6 +286,7 @@ be_trapped(coord *tc)
 	    }
 	when TELTRAP:
 	    teleport();
+	    msg("You feel a wrenching sensation.");	/* RVIP: the original teleports silently */
 	when DARTTRAP:
 	    if (swing(pstats.s_lvl+1, pstats.s_arm, 1))
 	    {
