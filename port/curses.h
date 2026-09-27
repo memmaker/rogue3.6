@@ -28,6 +28,7 @@ typedef struct _win {
     int maxy, maxx, begy, begx, cury, curx;
     int clear;          /* clearok */
     short *first, *last;/* changed range per line, -1 = none */
+    int ext_c, ext_r;   /* extent last sent with be_extent() */
     chtype *c;
 } WINDOW;
 
@@ -153,6 +154,7 @@ int  tile_for(int y, int x, int ch, int *under);  /* tiles.c: -1 = text */
 struct wc_kind { int type; const char *name, *css; };
 const struct wc_kind *wc_kind(int type);         /* tiles.c */
 void be_invfg(int y, const char *css);   /* inventory row colour */
+void be_extent(int p, int cols, int rows); /* text pane trimmed: cells in use (RVIP W0) */
 void wc_inv(WINDOW *);                            /* tiles.c */
 extern WINDOW *wc_mapwin;  /* the game's map window (cw) */
 extern int wc_cmd_prompt;  /* waiting for a command key */

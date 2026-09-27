@@ -39,6 +39,8 @@ void be_init(int p, int cols, int rows) { js_init(p, cols, rows); }
 void be_put(int p, int y, int x, chtype ch, int tile, int under) { js_put(p, y, x, ch, tile, under); }
 void be_cursor(int p, int y, int x) { js_cursor(p, y, x); }
 void be_popup(int rows, int cols) { js_popup(rows, cols); }
+EM_JS(void, js_extent, (int p, int c, int r), { Module.xr.extent(p, c, r); });
+void be_extent(int p, int cols, int rows) { js_extent(p, cols, rows); }
 void be_sound(const char *s) { if (*s) js_sound(s); }
 
 /* Visible window (RVIP 5b): monsters and objects drawn on the player's

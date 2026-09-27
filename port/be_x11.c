@@ -293,5 +293,6 @@ void be_run_end(const char *ev, const char *killer, int score) { }
 
 void be_end(void) { if (dpy) XCloseDisplay(dpy); dpy = NULL; }
 void be_invfg(int y, const char *css) { }
+void be_extent(int p, int cols, int rows) { }   /* web only: X11 panes keep their full size */
 
 void be_prompt(const char *s) { }   /* web only: the prompt line over the map */

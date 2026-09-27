@@ -55,8 +55,8 @@
 			T.font = f + 'px ' + FONT;
 		}
 		if (p === P_MAP) T.font = 'bold ' + Math.round(T.ch * 0.8) + 'px ' + FONT;
-		/* text windows show only the cells in use: no blank columns or rows after the text */
-		if (p !== P_MAP && p !== P_POP) used(T); else { T.vc = T.cols; T.vr = T.rows; }
+		/* text panes come trimmed from the game (be_extent): the canvas covers T.vc × T.vr cells */
+		if (p === P_MAP || p === P_POP) { T.vc = T.cols; T.vr = T.rows; }
 		var w = T.vc * T.cw + 2 * T.pad, h = T.vr * T.ch + 2 * T.pad;
 		T.cv.width = Math.round(w * dpr); T.cv.height = Math.round(h * dpr);
 		T.w = w; T.h = h;
@@ -68,21 +68,10 @@
 		fit(p);
 	}
 
-	/* the used part of a grid (trailing blanks trimmed): T.vc columns × T.vr rows, at least 1×1 */
-	function used(T) {
-		var vc = 0, vr = 0;
-		for (var i = 0; i < T.ch_.length; i++) {
-			if ((T.ch_[i] & 0xff) <= 32 && T.t[i] < 0 && !(T.ch_[i] & 0x100)) continue;
-			var x = i % T.cols + 1, y = ((i / T.cols) | 0) + 1;
-			if (x > vc) vc = x; if (y > vr) vr = y;
-		}
-		T.vc = Math.max(1, vc); T.vr = Math.max(1, vr);
-	}
-
 	function makePane(p, cols, rows) {
 		var cv = p === P_POP ? document.querySelector('#pop canvas') : document.querySelector('#t-' + WIN[p] + ' canvas');
 		var n = cols * rows;
-		panes[p] = { cv: cv, cols: cols, rows: rows, ch_: new Int32Array(n).fill(32),
+		panes[p] = { cv: cv, cols: cols, rows: rows, vc: 1, vr: 1, ch_: new Int32Array(n).fill(32),
 			t: new Int32Array(n).fill(-1), u: new Int32Array(n).fill(-1) };
 		shape(p);
 	}
@@ -312,6 +301,11 @@
 			T.ch_[i] = ch; T.t[i] = t; T.u[i] = u;
 			draw(p, y, x);
 		},
+		extent: function (p, c, r) {   /* the game's trimmed size of a text pane */
+			var T = panes[p];
+			if (!T || (T.vc === c && T.vr === r)) return;
+			T.vc = c; T.vr = r; shape(p);
+		},
 		cursor: function (p, y, x) { cur.p = p; cur.y = y; cur.x = x; },
 		popup: function (rows, cols) {
 			if (!rows) { $('pop').hidden = true; panes[P_POP] = null; if (cur.p === P_POP) cur.p = -1; return; }
@@ -321,8 +315,6 @@
 		},
 		flush: function (level, town, hy, hx) {
 			if (hy !== hero.y || hx !== hero.x) { hero.y = hy; hero.x = hx; scrollMap(level !== audio.level); }
-			/* a text window whose used size changed gets its canvas re-trimmed */
-			WIN.forEach(function (id, p) { var T = panes[p]; if (p && T) { var vc = T.vc, vr = T.vr; used(T); if (vc !== T.vc || vr !== T.vr) shape(p); } });
 			/* the cursor is drawn over the cell; redraw that cell next time */
 			if (xr.lastCur && panes[xr.lastCur.p]) draw(xr.lastCur.p, xr.lastCur.y, xr.lastCur.x);
 			drawCursor();
