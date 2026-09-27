@@ -39,9 +39,10 @@
 
 	/* ---------- panes ---------- */
 
+	function face() { return L && L.face ? '"' + L.face + '", ' + FONT : FONT; }
 	function measure(px) {
 		var c = document.createElement('canvas').getContext('2d');
-		c.font = px + 'px ' + FONT;
+		c.font = px + 'px ' + face();
 		return Math.ceil(c.measureText('M').width);
 	}
 
@@ -52,9 +53,9 @@
 		else {
 			var f = p === P_POP ? L.font.pop : L.font[WIN[p]];
 			T.cw = measure(f); T.ch = Math.round(f * 1.3); T.pad = p === P_POP ? T.cw : 0;
-			T.font = f + 'px ' + FONT;
+			T.font = f + 'px ' + face();
 		}
-		if (p === P_MAP) T.font = 'bold ' + Math.round(T.ch * 0.8) + 'px ' + FONT;
+		if (p === P_MAP) T.font = (L.face ? '' : 'bold ') + Math.round(T.ch * 0.8) + 'px ' + face();
 		/* text panes come trimmed from the game (be_extent): the canvas covers T.vc × T.vr cells */
 		if (p === P_MAP || p === P_POP) { T.vc = T.cols; T.vr = T.rows; }
 		var w = T.vc * T.cw + 2 * T.pad, h = T.vr * T.ch + 2 * T.pad;
@@ -106,6 +107,7 @@
 	function drawCursor() {
 		var T = panes[cur.p];
 		if (!T || cur.y >= T.rows || cur.x >= T.cols) return;
+		if (cur.p === P_MAP && cur.y === hero.y && cur.x === hero.x) return;   /* the hero is marker enough */
 		var c = T.ctx, px = T.pad + cur.x * T.cw, py = T.pad + cur.y * T.ch;
 		c.fillStyle = c.strokeStyle = FG;
 		if (tilesReady && T.t[cur.y * T.cols + cur.x] >= 0) { c.lineWidth = 1; c.strokeRect(px + 0.5, py + 0.5, T.cw - 1, T.ch - 1); }
@@ -155,11 +157,14 @@
 					if (s.font && s.font[k] >= FONT_MIN && s.font[k] <= FONT_MAX) d.font[k] = s.font[k];
 				});
 				if (s.wm) d.wm = s.wm;
+				if (typeof s.face === 'string') d.face = s.face;
 				if (s.audio) d.audio = { sound: s.audio.sound === true, music: s.audio.music === true };
 			}
 		} catch (err) { /* nothing saved yet */ }
 		L = d;
 		renderAudio();
+		$('sel-font').value = L.face || '';   /* if fonts.json came first */
+		if (L.face) loadFace(L.face);
 	}
 
 	var saveTimer = 0;
@@ -225,10 +230,10 @@
 			wins: [{ id: 'map', title: 'Map' }, { id: 'msg', title: 'Messages' }, { id: 'stat', title: 'Status' }, { id: 'inv', title: 'Inventory' }, { id: 'vis', title: 'Visible' }],
 			multi: { d: 'v', r: s.bottom, a: 'map', b: { d: 'h', r: 0.4, a: { d: 'v', r: s.stat, a: 'msg', b: 'stat' }, b: { d: 'h', r: 0.5, a: 'inv', b: 'vis' } } },
 			single: { d: 'v', r: line / A.h, a: 'msg', b: { d: 'v', r: 1 - stat / (A.h - line), a: 'map', b: 'stat' } },
-			state: L.wm, noFont: 'map',
+			state: L.wm,
 			save: function (st) { L.wm = st; saveLayout(); },
 			layout: function (r) { rects = r; WIN.forEach(function (id, p) { fit(p); }); fit(P_POP); },
-			font: function (id, d) { if (id === 'vis') zoomList(d); else zoomText(id, d); },
+			font: function (id, d) { if (id === 'map') zoomMap(d); else if (id === 'vis') zoomList(d); else zoomText(id, d); },
 			onReset: resetLayout
 		});
 		wm.apply();
@@ -252,8 +257,8 @@
 	}
 
 	function resetLayout() {
-		var a = L.audio;
-		L = defaultLayout(); L.audio = a; L.wm = wm.state();
+		var a = L.audio, fc = L.face;
+		L = defaultLayout(); L.audio = a; L.face = fc; L.wm = wm.state();
 		for (var p = 0; p < panes.length; p++) if (panes[p]) shape(p);
 		applyDom(); saveLayout();
 	}
@@ -288,8 +293,8 @@
 	}
 	function renderAudio() {
 		var a = L ? L.audio : { sound: false, music: false };
-		$('btn-sound').textContent = 'Sound: ' + (a.sound ? 'on' : 'off');
-		$('btn-music').textContent = 'Music: ' + (a.music ? 'on' : 'off');
+		$('chk-sound').checked = a.sound;
+		$('chk-music').checked = a.music;
 	}
 
 	/* ---------- called by the game (port/be_web.c) ---------- */
@@ -336,8 +341,15 @@
 			(T.rowIcon = T.rowIcon || [])[y] = t;
 			for (var x = 0; x < T.cols; x++) draw(P_INV, y, x);
 		},
+		rowfg: function (p, y, c) {   /* the game's colour for a pop-up row */
+			var T = panes[p];
+			if (!T || y >= T.rows) return;
+			(T.rowFg = T.rowFg || [])[y] = c;
+			for (var x = 0; x < T.cols; x++) draw(p, y, x);
+		},
+		icons: function () { return tilesReady ? 1 : 0; },
 		vis: function (s) { RvipWM.visible(document.querySelector('#t-vis .body'), s, visIcon); },
-		key: function (atCmd) { RvipWM.prompt.wait(atCmd); return events.length ? events.shift() : -1; },
+		key: function (atCmd) { RvipWM.prompt.wait(atCmd); xr.atCmd = atCmd; return events.length ? events.shift() : -1; },
 		prompt: function (s) { RvipWM.prompt.text(s); },
 		requestSave: function () { saveReq = true; },   /* also for testing */
 		wantSave: function () {
@@ -493,18 +505,28 @@
 		renderTileset();
 		var redraw = function () {
 			[P_MAP, P_INV].forEach(function (p) { if (panes[p]) shape(p); });
-			var vb = document.querySelector('#t-vis .body'); if (vb) vb._vis = null;
+			var vb = document.querySelector('#t-vis .body');
+			if (vb && vb._vis != null) { var s = vb._vis; vb._vis = null; xr.vis(s); }
+			if (xr.atCmd) events.push(12);   /* ^L: the game redraws, the Inventory gets or drops its icons */
 			applyDom();
 		};
 		if (!TILESETS[tileset][0]) { tilesReady = false; redraw(); return; }   /* text mode */
 		tiles.onload = function () { if (TILESETS[tileset][0]) { tilesReady = true; redraw(); } };
 		tiles.src = TILESETS[tileset][0];
 	}
+	/* text font: a face from the index page's fonts/ (web/build.sh lists them) */
+	function loadFace(n) {
+		var redraw = function () { for (var p = 0; p < panes.length; p++) if (panes[p]) shape(p); document.querySelector('#t-vis .body').style.fontFamily = n ? '"' + n + '", monospace' : ''; applyDom(); };
+		if (!n) { redraw(); return; }
+		var ff = new FontFace(n, 'url(../fonts/' + n + '.woff)');
+		ff.load().then(function () { document.fonts.add(ff); redraw(); }).catch(function () { status('Could not load the font ' + n + '.', true); });
+	}
 	/* Visible window icon: the tile as a CSS sprite */
 	function visIcon(t) {
 		if (!tilesReady || !(t >= 0)) return null;
 		var s = document.createElement('i');
-		s.style.cssText = 'display:inline-block;width:16px;height:16px;vertical-align:-3px;margin-right:4px;image-rendering:pixelated;background:url(' + tiles.src + ') -' + (t % 32) * 16 + 'px -' + ((t / 32) | 0) * 16 + 'px';
+		s.className = 'wm-ic';
+		s.style.cssText = 'image-rendering:pixelated;background:url(' + tiles.src + ') -' + (t % 32) * 16 + 'px -' + ((t / 32) | 0) * 16 + 'px';
 		return s;
 	}
 	if (TILESETS[tileset][0]) tiles.src = TILESETS[tileset][0]; else tilesDone = true;
@@ -539,12 +561,18 @@
 		$('btn-new').onclick = newGame;
 		$('btn-help').onclick = toggleHelp;
 		$('help-close').onclick = toggleHelp;
-		$('btn-zoom-in').onclick = function () { zoomMap(1); };
-		$('btn-zoom-out').onclick = function () { zoomMap(-1); };
 		$('btn-tiles').onclick = toggleTileset;
 		renderTileset();
-		$('btn-sound').onclick = function () { toggleAudio('sound'); };
-		$('btn-music').onclick = function () { toggleAudio('music'); };
+		$('chk-sound').onchange = function () { toggleAudio('sound'); };
+		$('chk-music').onchange = function () { toggleAudio('music'); };
+		RvipWM.dropdown($('btn-audio'), $('menu-audio'));
+		RvipWM.dropdown($('btn-file'), $('menu-file'));
+		fetch('fonts.json').then(function (r) { return r.json(); }).then(function (list) {
+			var s = $('sel-font');
+			list.forEach(function (n) { var o = document.createElement('option'); o.value = n; o.textContent = n.replace(/^Web(Plus|437)_/, '').replace(/_/g, ' '); s.appendChild(o); });
+			s.value = (L && L.face) || '';
+		}).catch(function () { });
+		$('sel-font').onchange = function () { if (!L) return; L.face = this.value; saveLayout(); loadFace(L.face); this.blur(); };
 		$('btn-restart').onclick = function () { location.reload(); };
 		renderAudio();
 		document.querySelectorAll('button').forEach(function (b) {

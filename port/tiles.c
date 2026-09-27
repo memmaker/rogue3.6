@@ -153,13 +153,13 @@ void wc_inv(WINDOW *p)
 {
     char save[sizeof prbuf];
     struct linked_list *l;
-    int y = 0, ch = 'a';
+    int y = 0, ch = 'a', ic = be_icons();
 
     memcpy(save, prbuf, sizeof save);
     for (l = pack; l && y < p->maxy - 1; l = next(l), y++, ch++) {
-        mvwprintw(p, y, 0, "%c)   %s", ch, inv_name(OBJPTR(l), FALSE));  /* cols 3-4: icon */
+        mvwprintw(p, y, 0, ic ? "%c)    %s" : "%c) %s", ch, inv_name(OBJPTR(l), FALSE));  /* cols 3-4: icon */
         wclrtoeol(p);
-        be_invfg(y, wc_kind((OBJPTR(l))->o_type)->css, wc_obj_tile(OBJPTR(l)));
+        be_invfg(y, wc_kind((OBJPTR(l))->o_type)->css, ic ? wc_obj_tile(OBJPTR(l)) : -1);
     }
     for (; y < p->maxy; y++) { be_invfg(y, "", -1); if (y < p->maxy - 1) { wmove(p, y, 0); wclrtoeol(p); } }
     mvwprintw(p, y, 0, "%d/%d items, %d gold", inpack, MAXPACK, purse);

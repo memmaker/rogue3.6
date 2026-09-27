@@ -30,6 +30,7 @@ typedef struct _win {
     short *first, *last;/* changed range per line, -1 = none */
     int ext_c, ext_r;   /* extent last sent with be_extent() */
     chtype *c;
+    const char **fg;    /* row colour (css) set by the game, NULL = default */
 } WINDOW;
 
 extern WINDOW *stdscr, *curscr;
@@ -157,6 +158,9 @@ int wc_obj_tile(struct object *o);
 int wc_mon_tile(int ch);
 const struct wc_kind *wc_kind(int type);         /* tiles.c */
 void be_invfg(int y, const char *css, int tile);   /* inventory row colour */
+void be_rowfg(int p, int y, const char *css);      /* pop-up row colour */
+int be_icons(void);                                /* item icons shown in the Inventory pane */
+int wc_rowfg(WINDOW *w, int y, const char *css);
 void be_extent(int p, int cols, int rows); /* text pane trimmed: cells in use (RVIP W0) */
 void wc_inv(WINDOW *);                            /* tiles.c */
 extern WINDOW *wc_mapwin;  /* the game's map window (cw) */
