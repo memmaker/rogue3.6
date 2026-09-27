@@ -188,7 +188,10 @@
 		 * (an 80-column inventory would otherwise shrink, and A+/A- do nothing) */
 		var used = p === P_POP ? T.w : Math.max(1, usedCols(T)) * T.cw + 2 * T.pad;
 		T.fitCols = usedCols(T);
-		var sc = Math.min(1, box.w / used, box.h / T.h);
+		/* the inventory is a fixed slot list with its totals on the last row:
+		 * fit its width only and let the window scroll, or its empty slots
+		 * shrink the text as soon as it is taller than the window */
+		var sc = Math.min(1, box.w / used, p === P_INV ? 1 : box.h / T.h);
 		T.cv.style.width = T.w * sc + 'px';
 		T.cv.style.height = T.h * sc + 'px';
 		if (p === P_POP) { var pop = $('pop'); pop.style.left = rects.map[0] + L.tile + 'px'; pop.style.top = rects.map[1] + 4 + 'px'; }
