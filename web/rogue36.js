@@ -55,7 +55,9 @@
 			T.font = f + 'px ' + FONT;
 		}
 		if (p === P_MAP) T.font = 'bold ' + Math.round(T.ch * 0.8) + 'px ' + FONT;
-		var w = T.cols * T.cw + 2 * T.pad, h = T.rows * T.ch + 2 * T.pad;
+		/* text windows show only the cells in use: no blank columns or rows after the text */
+		if (p !== P_MAP && p !== P_POP) used(T); else { T.vc = T.cols; T.vr = T.rows; }
+		var w = T.vc * T.cw + 2 * T.pad, h = T.vr * T.ch + 2 * T.pad;
 		T.cv.width = Math.round(w * dpr); T.cv.height = Math.round(h * dpr);
 		T.w = w; T.h = h;
 		T.ctx = T.cv.getContext('2d');
@@ -64,6 +66,17 @@
 		T.ctx.fillStyle = BG; T.ctx.fillRect(0, 0, w, h);
 		for (var i = 0; i < T.cols * T.rows; i++) draw(p, (i / T.cols) | 0, i % T.cols);
 		fit(p);
+	}
+
+	/* the used part of a grid (trailing blanks trimmed): T.vc columns × T.vr rows, at least 1×1 */
+	function used(T) {
+		var vc = 0, vr = 0;
+		for (var i = 0; i < T.ch_.length; i++) {
+			if ((T.ch_[i] & 0xff) <= 32 && T.t[i] < 0 && !(T.ch_[i] & 0x100)) continue;
+			var x = i % T.cols + 1, y = ((i / T.cols) | 0) + 1;
+			if (x > vc) vc = x; if (y > vr) vr = y;
+		}
+		T.vc = Math.max(1, vc); T.vr = Math.max(1, vr);
 	}
 
 	function makePane(p, cols, rows) {
@@ -76,6 +89,7 @@
 
 	function draw(p, y, x) {
 		var T = panes[p], c = T.ctx, i = y * T.cols + x;
+		if (x >= T.vc || y >= T.vr) return;                 /* outside the trimmed canvas */
 		var ch = T.ch_[i], t = T.t[i], u = T.u[i];
 		var px = T.pad + x * T.cw, py = T.pad + y * T.ch;
 		var inv = !!(ch & 0x100);
@@ -307,6 +321,8 @@
 		},
 		flush: function (level, town, hy, hx) {
 			if (hy !== hero.y || hx !== hero.x) { hero.y = hy; hero.x = hx; scrollMap(level !== audio.level); }
+			/* a text window whose used size changed gets its canvas re-trimmed */
+			WIN.forEach(function (id, p) { var T = panes[p]; if (p && T) { var vc = T.vc, vr = T.vr; used(T); if (vc !== T.vc || vr !== T.vr) shape(p); } });
 			/* the cursor is drawn over the cell; redraw that cell next time */
 			if (xr.lastCur && panes[xr.lastCur.p]) draw(xr.lastCur.p, xr.lastCur.y, xr.lastCur.x);
 			drawCursor();
