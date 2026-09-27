@@ -92,8 +92,8 @@
 			return;
 		}
 		var ic = p === P_INV && T.rowIcon ? T.rowIcon[y] : -1;
-		if (ic >= 0 && tilesReady && (x === 3 || x === 4)) {   /* square, whatever the font's cell shape */
-			var s = Math.min(2 * T.cw, T.ch), ix = T.pad + 3 * T.cw + (2 * T.cw - s) / 2;
+		if (ic >= 0 && tilesReady && x >= 2 && x <= 4) {   /* square, whatever the font's cell shape; centred in cols 2-4 */
+			var s = Math.min(2 * T.cw, T.ch), ix = T.pad + 2 * T.cw + (3 * T.cw - s) / 2;
 			c.save(); c.beginPath(); c.rect(px, py, T.cw, T.ch); c.clip();
 			c.drawImage(tiles, (ic % 32) * 16, ((ic / 32) | 0) * 16, 16, 16, ix, py + (T.ch - s) / 2, s, s);
 			c.restore();
