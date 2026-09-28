@@ -65,7 +65,7 @@
 #ifndef uid_t
 typedef unsigned int uid_t;
 #endif
-#ifndef pid_t
+#if !defined(pid_t) && !defined(__MINGW32__)
 typedef unsigned int pid_t;
 #endif
 
@@ -123,7 +123,7 @@ typedef unsigned int pid_t;
 #define HAVE_ALARM 1
 #endif
 
-#if defined(__APPLE__) || defined(__EMSCRIPTEN__)	/* RVIP: no crypt.h; curses shim, no term.h */
+#if defined(__APPLE__) || defined(__EMSCRIPTEN__) || defined(RVIP_TERM)	/* RVIP: no crypt.h; curses shim, no term.h */
 #undef HAVE_CRYPT_H
 #undef HAVE_TERM_H
 #endif

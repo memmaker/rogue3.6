@@ -155,3 +155,10 @@ XFLAGS = -O2 -g -std=gnu89 -w -Wno-implicit-function-declaration -Wno-implicit-i
 PORTSRC = port/wcurses.c port/tiles.c port/be_x11.c
 rogue36-x11: $(CFILES) $(HDRS) $(PORTSRC) port/curses.h port/tilemap.h
 	$(CC) $(XFLAGS) $(EXTRA) $(CFILES) $(PORTSRC) -L/opt/X11/lib -lX11 -lXft -lfontconfig -o $@
+
+# Native terminal build (release): the curses shim drawn with ANSI escapes
+# by port/be_term.c, no curses library. make rogue36-term [EXE=.exe]
+TFLAGS = -O2 -std=gnu89 -w -Wno-error=implicit-function-declaration -Wno-error=implicit-int -Wno-error=int-conversion -Wno-error=incompatible-pointer-types -DWC_STATUS_ROWS=1 -DRVIP_TERM -DSCOREFILE=\"rogue36.scr\" -Iport
+TERMSRC = port/wcurses.c port/tiles.c port/be_term.c
+rogue36-term: $(CFILES) $(HDRS) $(TERMSRC) port/curses.h port/tilemap.h
+	$(CC) $(TFLAGS) $(EXTRA) $(CFILES) $(TERMSRC) $(TLIBS) -o $@$(EXE)
