@@ -48,6 +48,9 @@ static int real(int y, int x)
         : stdscr->c[y * stdscr->maxx + x] & A_CHARTEXT;
 }
 
+enum { K_NONE, K_ROOM, K_CORR, K_DOOR };
+static int autotile(int y, int x, int k);
+
 #define HWALLISH(c) ((c) == '-' || (c) == DOOR || (c) == SECRETDOOR)
 #define VWALLISH(c) ((c) == '|' || (c) == DOOR || (c) == SECRETDOOR)
 
@@ -64,19 +67,55 @@ static int terrain(int y, int x, int ch)
             return HWALLISH(r) ? T_BL : T_BR;
         return T_HWALL;
     case '|': return T_VWALL;
-    case DOOR: return T_FLOOR;   /* Rogue doors are just gaps in the wall */
+    case DOOR: return autotile(y, x, K_DOOR);   /* Rogue doors are just gaps in the wall */
+    case FLOOR: return autotile(y, x, K_ROOM);
+    case PASSAGE: return autotile(y, x, K_CORR);
     }
     return ch < 128 ? terrain_tile[ch] : -1;
+}
+
+/* An item, trap or stairs covers the terrain on stdscr: outside every room
+   it lies in a corridor (items can be dropped there). */
+static int under_kind(int y, int x)
+{
+    coord c;
+    c.y = y; c.x = x;
+    return roomin(&c) ? K_ROOM : K_CORR;
+}
+
+/* Floor kind of a cell on the real level (stdscr), not the player's view:
+   a border is part of the terrain and must not follow the lit area. */
+static int kind(int y, int x)
+{
+    int c = real(y, x);
+    if (c == ' ' || c == '-' || c == '|' || c == SECRETDOOR) return K_NONE;
+    if (c == DOOR) return K_DOOR;
+    if (c == PASSAGE) return K_CORR;
+    if (c == FLOOR) return K_ROOM;
+    return under_kind(y, x);
+}
+
+/* DawnLike autotile (RVIP-Finetuning): a border on each side whose
+   neighbour is not the same floor; doors join rooms and corridors. */
+static int autotile(int y, int x, int k)
+{
+    int m = 0, i, n;
+    static const int dy[] = { -1, 1, 0, 0 }, dx[] = { 0, 0, -1, 1 };
+    for (i = 0; i < 4; i++) {
+        n = kind(y + dy[i], x + dx[i]);
+        if (n == K_NONE || (n != k && n != K_DOOR && k != K_DOOR)) m |= 8 >> i;
+    }
+    return (k == K_CORR ? T_CORRS : T_FLOORS) + m;
 }
 
 /* The floor under a monster or item: what the real map (stdscr) has. */
 static int floor_under(int y, int x)
 {
     int c = stdscr->c[y * stdscr->maxx + x] & A_CHARTEXT;
-    if (c == PASSAGE) return T_CORR;
-    if (c == DOOR) return T_FLOOR;
+    if (c == PASSAGE) return autotile(y, x, K_CORR);
+    if (c == DOOR) return autotile(y, x, K_DOOR);
     if (c == STAIRS || c == TRAP) return terrain_tile[c];
-    return T_FLOOR;
+    return autotile(y, x, under_kind(y, x));
 }
 
 int tile_for(int y, int x, int ch, int *under)

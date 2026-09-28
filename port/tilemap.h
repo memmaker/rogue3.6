@@ -2,7 +2,7 @@
 #define TILES_PER_ROW 32
 static const short mon_tile[] = {0,128,133,150,29,168,169,73,157,12,61,65,66,69,74,117,56,217,220,225,230,231,236,238,242,250};
 static const short class_tile[] = {346};
-static const short weap_tile[] = {468,449,478,413,429,871,450,482,419,483,418,422};
+static const short weap_tile[] = {468,449,481,413,429,871,450,482,419,483,418,422};
 static const short armor_tile[] = {531,529,528,527,525,521,522,518};
 static const short mm_tile[] = {-1};
 static const short relic_tile[] = {-1};
@@ -27,3 +27,5 @@ static const short generic_tile[128] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-
 #define T_VDOOR 891
 #define T_FLOOR 897
 #define T_CORR 900
+#define T_FLOORS 1121
+#define T_CORRS 1137
