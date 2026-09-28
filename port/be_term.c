@@ -268,10 +268,10 @@ int be_getkey(int wait)
 {
     for (;;) {
         int k;
-        if (!wait && !key_ready(0)) {
-            /* polling (auto-explore): paint each step, a short pause */
-            be_flush();
-            key_ready(30);
+        if (wait <= 0 && !key_ready(0)) {
+            /* polling (auto-explore): paint each step, a short pause;
+             * wait -1 only drains the queue */
+            if (!wait) { be_flush(); key_ready(30); }
             return -1;
         }
         be_flush();
@@ -281,7 +281,9 @@ int be_getkey(int wait)
 
 void be_end(void) { term_stop(); }
 void be_sound(const char *s) { (void)s; }
-void be_run_end(const char *ev, const char *killer, int score) { (void)ev; (void)killer; (void)score; }
 void be_invfg(int y, const char *css, int tile) { (void)y; (void)css; (void)tile; }
 void be_rowfg(int p, int y, const char *css) { (void)p; (void)y; (void)css; }
 int be_icons(void) { return 0; }
+
+/* web-only hooks */
+void be_run_end(const char *ev, const char *killer, int score) { }
