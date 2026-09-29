@@ -18,3 +18,13 @@ Ported after Rogue 5.4 (`~/Games/rogue5.4`) and the Advanced Rogue line;
   a branch only the web build compiles.
 - Prompt line (`RvipWM.prompt`, RVIP 5.9): `be_prompt(r)` from `msg_refresh()` in `port/wcurses.c` (row 0 text),
   `js_key(wc_cmd_prompt)` in `port/be_web.c`; `be_x11.c` has an empty stub.
+
+## Sound (Stage 6, 2026-09-29)
+- Web search for sound effects or music released for Rogue 3.6 or its versions
+  (official sources, ports, fan packs): none found. The Epyx-era Rogue
+  ports had their own sounds but they are commercial, not redistributable;
+  the rest are generic stock packs, not made for this game.
+- So the effects are synthesized for this game at build time by
+  `web/mksounds.py` (stdlib only; per-game palette: waveform, pitch, tempo,
+  seed) for the `be_sound()` events; no DASP/Dubtrain samples, no music
+  (the town loop and the Music toggle are gone). Off by default, Audio ▾.
